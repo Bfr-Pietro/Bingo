@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Sorteador</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .roulette-section {
+            flex: 1;
+            text-align: center;
+        }
+
+        .roulette-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 20px;
+            cursor: pointer;
+        }
+
+        .roulette {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff6b6b 0deg 18deg,
+                #4ecdc4 18deg 36deg,
+                #45b7d1 36deg 54deg,
+                #f9ca24 54deg 72deg,
+                #f0932b 72deg 90deg,
+                #eb4d4b 90deg 108deg,
+                #6c5ce7 108deg 126deg,
+                #a29bfe 126deg 144deg,
+                #fd79a8 144deg 162deg,
+                #fdcb6e 162deg 180deg,
+                #e17055 180deg 198deg,
+                #81ecec 198deg 216deg,
+                #74b9ff 216deg 234deg,
+                #55a3ff 234deg 252deg,
+                #00b894 252deg 270deg,
+                #00cec9 270deg 288deg,
+                #e84393 288deg 306deg,
+                #fd79a8 306deg 324deg,
+                #fdcb6e 324deg 342deg,
+                #ff7675 342deg 360deg
+            );
+            border: 8px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .roulette.spinning {
+            animation: spin 3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(1440deg); }
+        }
+
+        .ball-result {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff 0%, #ddd 100%);
+            border: 3px solid #333;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .voice-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .mic-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+
+        .mic-indicator.listening {
+            background: #00b894;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .bingo-table {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .letter-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .number-column {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .number-cell {
+            background: rgba(255,255,255,0.8);
+            color: #333;
+            padding: 8px;
+            text-align: center;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .number-cell.drawn {
+            background: #00b894;
+            color: white;
+            border-color: #00a085;
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0,184,148,0.4);
+        }
+
+        .last-drawn {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .commands-help {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .commands-help h3 {
+            margin-bottom: 10px;
+            color: #fdcb6e;
+        }
+
+        .commands-help ul {
+            list-style: none;
+        }
+
+        .commands-help li {
+            margin: 5px 0;
+            padding: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .roulette-container {
+                width: 250px;
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎰 BINGO SORTEADOR 🎰</h1>
+            <p>Clique na roleta ou use comandos de voz para sortear!</p>
+        </div>
+
+        <div class="main-content">
+            <div class="roulette-section">
+                <div class="roulette-container" onclick="drawNumber()">
+                    <div class="roulette" id="roulette">
+                        CLIQUE PARA<br>SORTEAR
+                    </div>
+                </div>
+                
+                <div class="ball-result" id="ballResult"></div>
+                
+                <div class="controls">
+                    <button class="btn" onclick="drawNumber()" id="drawBtn">Sortear Número</button>
+                    <button class="btn" onclick="resetGame()">Reiniciar Jogo</button>
+                </div>
+
+                <div class="voice-status">
+                    <div class="mic-indicator" id="micIndicator"></div>
+                    <span id="voiceStatus">Reconhecimento de voz ativo</span>
+                </div>
+
+                <div class="last-drawn" id="lastDrawn">
+                    Nenhum número sorteado ainda
+                </div>
+
+                <div class="commands-help">
+                    <h3>Comandos de Voz:</h3>
+                    <ul>
+                        <li>🗣️ "Olá bingo, sortear número" - Sorteia um novo número</li>
+                        <li>🗣️ "Olá bingo, última bola" - Repete o último número sorteado</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bingo-table">
+                <div class="table-header">
+                    <div class="letter-header">B</div>
+                    <div class="letter-header">I</div>
+                    <div class="letter-header">N</div>
+                    <div class="letter-header">G</div>
+                    <div class="letter-header">O</div>
+                </div>
+                
+                <div class="number-grid">
+                    <div class="number-column" id="columnB"></div>
+                    <div class="number-column" id="columnI"></div>
+                    <div class="number-column" id="columnN"></div>
+                    <div class="number-column" id="columnG"></div>
+                    <div class="number-column" id="columnO"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BingoGame {
+            constructor() {
+                this.drawnNumbers = new Set();
+                this.lastDrawnNumber = null;
+                this.isDrawing = false;
+                this.recognition = null;
+                
+                this.initializeTable();
+                this.initializeVoiceRecognition();
+                this.initializeSpeech();
+            }
+
+            initializeTable() {
+                const columns = {
+                    B: { element: document.getElementById('columnB'), range: [1, 15] },
+                    I: { element: document.getElementById('columnI'), range: [16, 30] },
+                    N: { element: document.getElementById('columnN'), range: [31, 45] },
+                    G: { element: document.getElementById('columnG'), range: [46, 60] },
+                    O: { element: document.getElementById('columnO'), range: [61, 75] }
+                };
+
+                Object.entries(columns).forEach(([letter, config]) => {
+                    for (let i = config.range[0]; i <= config.range[1]; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'number-cell';
+                        cell.textContent = i;
+                        cell.id = `number-${i}`;
+                        config.element.appendChild(cell);
+                    }
+                });
+            }
+
+            initializeSpeech() {
+                this.synth = window.speechSynthesis;
+                // Aguarda um pouco para carregar as vozes
+                setTimeout(() => {
+                    this.speak("Sistema de bingo inicializado. Pronto para sortear!");
+                }, 1000);
+            }
+
+            speak(text) {
+                if (this.synth) {
+                    // Cancela qualquer fala anterior
+                    this.synth.cancel();
+                    
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'pt-BR';
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1;
+                    utterance.volume = 0.8;
+                    
+                    // Tenta usar uma voz em português
+                    const voices = this.synth.getVoices();
+                    const ptVoice = voices.find(voice => 
+                        voice.lang.includes('pt') || voice.name.includes('Portuguese')
+                    );
+                    if (ptVoice) {
+                        utterance.voice = ptVoice;
+                    }
+                    
+                    this.synth.speak(utterance);
+                }
+            }
+
+            initializeVoiceRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    
+                    this.recognition.continuous = true;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'pt-BR';
+                    
+                    this.recognition.onstart = () => {
+                        document.getElementById('micIndicator').classList.add('listening');
+                        document.getElementById('voiceStatus').textContent = 'Ouvindo...';
+                    };
+                    
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                        console.log('Comando ouvido:', transcript);
+                        
+                        if (transcript.includes('olá bingo')) {
+                            if (transcript.includes('sortear número')) {
+                                this.drawNumber();
+                            } else if (transcript.includes('última bola')) {
+                                this.announceLastDrawn();
+                            }
+                        }
+                    };
+                    
+                    this.recognition.onerror = (event) => {
+                        console.log('Erro no reconhecimento:', event.error);
+                        document.getElementById('voiceStatus').textContent = 'Erro no reconhecimento de voz';
+                        setTimeout(() => {
+                            if (this.recognition) {
+                                this.recognition.start();
+                            }
+                        }, 2000);
+                    };
+                    
+                    this.recognition.onend = () => {
+                        document.getElementById('micIndicator').classList.remove('listening');
+                        document.getElementById('voiceStatus').textContent = 'Reconhecimento de voz ativo';
+                        
+                        // Reinicia o reconhecimento automaticamente
+                        setTimeout(() => {
+                            if (this.recognition) {
+                                this.recognition.start();
+                            }
+                        }, 1000);
+                    };
+                    
+                    // Inicia o reconhecimento
+                    try {
+                        this.recognition.start();
+                    } catch (e) {
+                        console.log('Erro ao iniciar reconhecimento:', e);
+                    }
+                } else {
+                    document.getElementById('voiceStatus').textContent = 'Reconhecimento de voz não suportado';
+                }
+            }
+
+            getLetterForNumber(number) {
+                if (number <= 15) return 'B';
+                if (number <= 30) return 'I';
+                if (number <= 45) return 'N';
+                if (number <= 60) return 'G';
+                return 'O';
+            }
+
+            drawNumber() {
+                if (this.isDrawing) return;
+                if (this.drawnNumbers.size >= 75) {
+                    this.speak("Todos os números já foram sorteados!");
+                    return;
+                }
+
+                this.isDrawing = true;
+                document.getElementById('drawBtn').disabled = true;
+
+                // Inicia animação da roleta
+                const roulette = document.getElementById('roulette');
+                const ballResult = document.getElementById('ballResult');
+                
+                roulette.classList.add('spinning');
+                roulette.textContent = '';
+                ballResult.style.display = 'none';
+
+                this.speak("Sorteando número...");
+
+                setTimeout(() => {
+                    // Gera número não sorteado
+                    let number;
+                    do {
+                        number = Math.floor(Math.random() * 75) + 1;
+                    } while (this.drawnNumbers.has(number));
+
+                    this.drawnNumbers.add(number);
+                    this.lastDrawnNumber = number;
+
+                    const letter = this.getLetterForNumber(number);
+                    
+                    // Para a animação
+                    roulette.classList.remove('spinning');
+                    
+                    // Mostra resultado
+                    setTimeout(() => {
+                        ballResult.textContent = `${letter}${number}`;
+                        ballResult.style.display = 'flex';
+                        
+                        // Marca na tabela
+                        const cell = document.getElementById(`number-${number}`);
+                        if (cell) {
+                            cell.classList.add('drawn');
+                        }
+                        
+                        // Atualiza último sorteado
+                        document.getElementById('lastDrawn').textContent = 
+                            `Último número: ${letter}${number}`;
+                        
+                        // Anuncia o resultado
+                        this.speak(`O número sorteado foi ${letter} ${number}`);
+                        
+                        // Reseta para próximo sorteio
+                        setTimeout(() => {
+                            roulette.textContent = 'CLIQUE PARA\nSORTEAR';
+                            ballResult.style.display = 'none';
+                            this.isDrawing = false;
+                            document.getElementById('drawBtn').disabled = false;
+                        }, 3000);
+                        
+                    }, 500);
+                }, 3000);
+            }
+
+            announceLastDrawn() {
+                if (this.lastDrawnNumber) {
+                    const letter = this.getLetterForNumber(this.lastDrawnNumber);
+                    this.speak(`A última bola sorteada foi ${letter} ${this.lastDrawnNumber}`);
+                } else {
+                    this.speak("Nenhum número foi sorteado ainda");
+                }
+            }
+
+            resetGame() {
+                this.drawnNumbers.clear();
+                this.lastDrawnNumber = null;
+                
+                // Remove marcações da tabela
+                document.querySelectorAll('.number-cell.drawn').forEach(cell => {
+                    cell.classList.remove('drawn');
+                });
+                
+                document.getElementById('lastDrawn').textContent = 'Nenhum número sorteado ainda';
+                document.getElementById('roulette').textContent = 'CLIQUE PARA\nSORTEAR';
+                document.getElementById('ballResult').style.display = 'none';
+                
+                this.speak("Jogo reiniciado. Pronto para sortear!");
+            }
+        }
+
+        // Funções globais para compatibilidade
+        let game;
+
+        function initGame() {
+            game = new BingoGame();
+        }
+
+        function drawNumber() {
+            if (game) {
+                game.drawNumber();
+            }
+        }
+
+        function resetGame() {
+            if (game) {
+                game.resetGame();
+            }
+        }
+
+        // Inicializa o jogo quando a página carrega
+        window.addEventListener('load', () => {
+            // Aguarda um pouco para garantir que tudo está carregado
+            setTimeout(initGame, 500);
+        });
+
+        // Solicita permissão para microfone quando a página carrega
+        window.addEventListener('load', () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(() => {
+                    console.log('Permissão de microfone concedida');
+                })
+                .catch(() => {
+                    console.log('Permissão de microfone negada');
+                });
+        });
+    </script>
+</body>
+</html>
